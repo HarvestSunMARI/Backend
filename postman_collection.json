@@ -1,0 +1,418 @@
+{
+  "info": {
+    "name": "HarvestSun - Tugas API",
+    "description": "Collection untuk testing API fitur tugas penyuluh",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tugas_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"penyuluh@harvestsun.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Siti Penyuluh\",\n  \"email\": \"penyuluh@harvestsun.com\",\n  \"password\": \"password123\",\n  \"role\": \"penyuluh\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "register"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tugas - Penyuluh",
+      "item": [
+        {
+          "name": "Get Daftar Konsultan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "user-id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tugas/konsultan-list",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tugas", "konsultan-list"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Tugas Baru",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user-id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"judul\": \"Pemantauan Tanaman Padi\",\n  \"deskripsi\": \"Melakukan pemantauan rutin terhadap pertumbuhan tanaman padi di lahan petani. Periksa kondisi tanah, air, dan hama penyakit.\",\n  \"konsultan_id\": \"{{konsultan_id}}\",\n  \"tanggal_mulai\": \"2024-01-15\",\n  \"deadline\": \"2024-01-25\",\n  \"lampiran_url\": \"https://example.com/panduan-pemantauan.pdf\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tugas",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tugas"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tugas Penyuluh",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "user-id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tugas/penyuluh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tugas", "penyuluh"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Detail Tugas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "user-id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tugas/{{tugas_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tugas", "{{tugas_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Tugas",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user-id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"judul\": \"Pemantauan Tanaman Padi - Updated\",\n  \"deskripsi\": \"Deskripsi yang diupdate\",\n  \"deadline\": \"2024-01-30\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tugas/{{tugas_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tugas", "{{tugas_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Tugas",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "user-id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tugas/{{tugas_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tugas", "{{tugas_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tugas - Konsultan",
+      "item": [
+        {
+          "name": "Get Tugas Konsultan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "user-id",
+                "value": "{{konsultan_user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tugas/konsultan",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tugas", "konsultan"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Status Tugas",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user-id",
+                "value": "{{konsultan_user_id}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Sedang Berlangsung\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tugas/{{tugas_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tugas", "{{tugas_id}}", "status"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tugas - Riwayat & Komentar",
+      "item": [
+        {
+          "name": "Get Riwayat Tugas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "user-id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tugas/{{tugas_id}}/riwayat",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tugas", "{{tugas_id}}", "riwayat"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Komentar Tugas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "user-id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tugas/{{tugas_id}}/komentar",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tugas", "{{tugas_id}}", "komentar"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Komentar Tugas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "user-id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"komentar\": \"Tugas sudah mulai dikerjakan. Akan melaporkan progress setiap 3 hari.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tugas/{{tugas_id}}/komentar",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tugas", "{{tugas_id}}", "komentar"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sample Data Setup",
+      "item": [
+        {
+          "name": "Register Konsultan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Budi Santoso\",\n  \"email\": \"konsultan@harvestsun.com\",\n  \"password\": \"password123\",\n  \"role\": \"konsultan_tani\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login Konsultan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"konsultan@harvestsun.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-set token from login response",
+          "if (pm.response && pm.response.json && pm.response.json().access_token) {",
+          "    pm.collectionVariables.set('token', pm.response.json().access_token);",
+          "}",
+          "",
+          "// Auto-set user_id from login response",
+          "if (pm.response && pm.response.json && pm.response.json().user && pm.response.json().user.id) {",
+          "    pm.collectionVariables.set('user_id', pm.response.json().user.id);",
+          "}",
+          "",
+          "// Auto-set konsultan_user_id from konsultan login response",
+          "if (pm.response && pm.response.json && pm.response.json().user && pm.response.json().user.id && pm.response.json().user.role === 'konsultan_tani') {",
+          "    pm.collectionVariables.set('konsultan_user_id', pm.response.json().user.id);",
+          "}",
+          "",
+          "// Auto-set konsultan_id from konsultan list response",
+          "if (pm.response && pm.response.json && Array.isArray(pm.response.json()) && pm.response.json().length > 0) {",
+          "    pm.collectionVariables.set('konsultan_id', pm.response.json()[0].id);",
+          "}",
+          "",
+          "// Auto-set tugas_id from create tugas response",
+          "if (pm.response && pm.response.json && pm.response.json().tugas && pm.response.json().tugas.id) {",
+          "    pm.collectionVariables.set('tugas_id', pm.response.json().tugas.id);",
+          "}"
+        ]
+      }
+    }
+  ]
+} 
