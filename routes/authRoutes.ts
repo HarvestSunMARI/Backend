@@ -3,7 +3,7 @@ import { registerUser, getAllUsers, getUserById, updateUser, deleteUser, loginUs
 
 const router = express.Router();
 
-// Register user
+// Register user (single)
 router.post('/register', async (req, res) => {
   const { name, email, password, role, wilayah } = req.body;
   try {
@@ -12,6 +12,25 @@ router.post('/register', async (req, res) => {
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
+});
+
+// Register many users (bulk insert)
+router.post('/register-many', async (req, res) => {
+  if (!Array.isArray(req.body)) {
+    res.status(400).json({ error: 'Request body harus berupa array user.' });
+    return;
+  }
+  const results = [];
+  for (const user of req.body) {
+    const { name, email, password, role, wilayah } = user;
+    try {
+      const result = await registerUser(name, email, password, role, wilayah);
+      results.push({ success: true, result });
+    } catch (err: any) {
+      results.push({ success: false, error: err.message, email });
+    }
+  }
+  res.json(results);
 });
 
 // Get all users
