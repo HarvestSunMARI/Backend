@@ -39,8 +39,6 @@ const verifyToken = (req: Request, res: Response, next: NextFunction): void => {
 
 // Middleware untuk mendapatkan user ID dari token
 const getUserFromToken = (req: Request, res: Response, next: NextFunction): void => {
-  // Di implementasi nyata, decode JWT token untuk dapat user ID
-  // Untuk sementara, kita ambil dari header atau body
   const userId = req.headers['user-id'] as string || req.body.user_id;
   if (!userId) {
     res.status(401).json({ error: 'User ID tidak ditemukan' });
@@ -63,7 +61,7 @@ router.get('/konsultan-list', verifyToken, getUserFromToken, async (req, res): P
 // POST /api/tugas - Buat tugas baru (oleh penyuluh)
 router.post('/', verifyToken, getUserFromToken, async (req, res): Promise<void> => {
   try {
-    const { judul, deskripsi, konsultan_id, tanggal_mulai, deadline, lampiran_url } = req.body;
+    const { judul, deskripsi, konsultan_id, tanggal_mulai, deadline, lampiran_url, jenis } = req.body;
     
     // Validasi input
     if (!judul || !konsultan_id || !deadline) {
@@ -79,7 +77,8 @@ router.post('/', verifyToken, getUserFromToken, async (req, res): Promise<void> 
       konsultan_id,
       tanggal_mulai,
       deadline,
-      lampiran_url
+      lampiran_url,
+      jenis
     };
 
     const newTugas = await createTugas(tugasData, req.userId!);

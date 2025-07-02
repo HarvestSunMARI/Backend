@@ -13,6 +13,7 @@ CREATE TABLE public.tugas (
     deadline DATE NOT NULL,
     status TEXT DEFAULT 'Belum Dikerjakan' CHECK (status IN ('Belum Dikerjakan', 'Sedang Berlangsung', 'Selesai')),
     lampiran_url TEXT,
+    jenis text,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

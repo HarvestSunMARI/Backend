@@ -6,10 +6,12 @@ const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KE
 export interface TugasData {
   judul: string;
   deskripsi?: string;
+  jenis: string;
   konsultan_id: string;
   tanggal_mulai?: string;
   deadline: string;
   lampiran_url?: string;
+  jenis: string;
 }
 
 export interface TugasWithDetails {
@@ -28,33 +30,27 @@ export interface TugasWithDetails {
   lampiran_url?: string;
   created_at: string;
   updated_at: string;
+  jenis: string;
 }
 
 // Dapatkan daftar konsultan untuk dropdown (berdasarkan wilayah penyuluh)
 export async function getKonsultanList(penyuluhId: string) {
-  // Dapatkan wilayah yang dibawahi penyuluh
-  const { data: wilayahPenyuluh, error: wilayahError } = await supabase
-    .from('wilayah_penyuluh')
+  const { data: penyuluh, error: penyuluhError } = await supabase
+    .from('users')
     .select('wilayah')
-    .eq('penyuluh_id', penyuluhId);
+    .eq('id', penyuluhId)
+    .single();
 
-  if (wilayahError) throw new Error(wilayahError.message);
+  if (penyuluhError) throw new Error(penyuluhError.message);
+  if (!penyuluh || !penyuluh.wilayah) return [];
 
-  if (!wilayahPenyuluh || wilayahPenyuluh.length === 0) {
-    return []; // Penyuluh belum punya wilayah yang dibawahi
-  }
-
-  // Dapatkan daftar wilayah
-  const wilayahList = wilayahPenyuluh.map(wp => wp.wilayah);
-
-  // Dapatkan konsultan yang berada di wilayah tersebut
   const { data, error } = await supabase
     .from('users')
     .select('id, name, email, wilayah')
     .eq('role', 'konsultan_tani')
-    .in('wilayah', wilayahList)
+    .eq('wilayah', penyuluh.wilayah)
     .order('name');
-  
+
   if (error) throw new Error(error.message);
   return data;
 }
@@ -108,7 +104,8 @@ export async function getTugasByPenyuluh(penyuluhId: string) {
     status: tugas.status,
     lampiran_url: tugas.lampiran_url,
     created_at: tugas.created_at,
-    updated_at: tugas.updated_at
+    updated_at: tugas.updated_at,
+    jenis: tugas.jenis
   }));
 }
 
@@ -142,7 +139,8 @@ export async function getTugasByKonsultan(konsultanId: string) {
     status: tugas.status,
     lampiran_url: tugas.lampiran_url,
     created_at: tugas.created_at,
-    updated_at: tugas.updated_at
+    updated_at: tugas.updated_at,
+    jenis: tugas.jenis
   }));
 }
 
@@ -175,7 +173,8 @@ export async function getTugasById(tugasId: string) {
     status: data.status,
     lampiran_url: data.lampiran_url,
     created_at: data.created_at,
-    updated_at: data.updated_at
+    updated_at: data.updated_at,
+    jenis: data.jenis
   };
 }
 
