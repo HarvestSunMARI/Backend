@@ -1,9 +1,10 @@
 import express, { Request, Response, NextFunction } from 'express';
+import { createClient } from '@supabase/supabase-js';
+// import { verifyToken, getUserFromToken } from '../middleware/auth';
 import {
-  getKonsultanList,
   createTugas,
   getTugasByPenyuluh,
-  getTugasByKonsultan,
+  getTugasByGapoktan,
   getTugasById,
   updateTugas,
   updateTugasStatus,
@@ -11,8 +12,10 @@ import {
   getTugasRiwayat,
   getTugasKomentar,
   addTugasKomentar,
-  TugasData
+  getGapoktanList
 } from '../services/tugasServices';
+
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
 
 // Extend Request interface to include userId
 declare global {
@@ -39,7 +42,8 @@ const verifyToken = (req: Request, res: Response, next: NextFunction): void => {
 
 // Middleware untuk mendapatkan user ID dari token
 const getUserFromToken = (req: Request, res: Response, next: NextFunction): void => {
-  const userId = req.headers['user-id'] as string || req.body.user_id;
+  // Ambil userId dari header, query, atau body (jika ada)
+  const userId = req.headers['user-id'] as string || req.query.user_id as string || (req.body && req.body.user_id);
   if (!userId) {
     res.status(401).json({ error: 'User ID tidak ditemukan' });
     return;
@@ -48,133 +52,95 @@ const getUserFromToken = (req: Request, res: Response, next: NextFunction): void
   next();
 };
 
-// GET /api/tugas/konsultan-list - Dapatkan daftar konsultan untuk dropdown
-router.get('/konsultan-list', verifyToken, getUserFromToken, async (req, res): Promise<void> => {
+// GET /api/tugas/gapoktan-list - Dapatkan daftar gapoktan untuk dropdown
+router.get('/gapoktan-list', verifyToken, getUserFromToken, async (req, res): Promise<void> => {
   try {
-    const konsultanList = await getKonsultanList(req.userId!);
-    res.json(konsultanList);
+    const gapoktanList = await getGapoktanList(req.userId!);
+    res.json(gapoktanList);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// POST /api/tugas - Buat tugas baru (oleh penyuluh)
+// POST /api/tugas - Buat tugas baru
 router.post('/', verifyToken, getUserFromToken, async (req, res): Promise<void> => {
   try {
-    const { judul, deskripsi, konsultan_id, tanggal_mulai, deadline, lampiran_url, jenis } = req.body;
-    
-    // Validasi input
-    if (!judul || !konsultan_id || !deadline) {
-      res.status(400).json({ 
-        error: 'Judul, konsultan, dan deadline harus diisi' 
-      });
-      return;
+    const tugas = await createTugas(req.body, req.userId!);
+    res.status(201).json(tugas);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/tugas - Dapatkan tugas berdasarkan role user
+router.get('/', verifyToken, getUserFromToken, async (req, res): Promise<void> => {
+  try {
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', req.userId!)
+      .single();
+
+    if (userError) throw new Error(userError.message);
+
+    let tugas;
+    if (user.role === 'penyuluh') {
+      tugas = await getTugasByPenyuluh(req.userId!);
+    } else if (user.role === 'gapoktan') {
+      tugas = await getTugasByGapoktan(req.userId!);
+    } else {
+      throw new Error('Role tidak valid');
     }
 
-    const tugasData: TugasData = {
-      judul,
-      deskripsi,
-      konsultan_id,
-      tanggal_mulai,
-      deadline,
-      lampiran_url,
-      jenis
-    };
-
-    const newTugas = await createTugas(tugasData, req.userId!);
-    res.status(201).json({
-      message: 'Tugas berhasil dibuat',
-      tugas: newTugas
-    });
-  } catch (err: any) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-// GET /api/tugas/penyuluh - Dapatkan tugas yang dibuat oleh penyuluh
-router.get('/penyuluh', verifyToken, getUserFromToken, async (req, res): Promise<void> => {
-  try {
-    const tugas = await getTugasByPenyuluh(req.userId!);
     res.json(tugas);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET /api/tugas/konsultan - Dapatkan tugas yang ditugaskan ke konsultan
-router.get('/konsultan', verifyToken, getUserFromToken, async (req, res): Promise<void> => {
-  try {
-    const tugas = await getTugasByKonsultan(req.userId!);
-    res.json(tugas);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// GET /api/tugas/:id - Dapatkan detail tugas berdasarkan ID
-router.get('/:id', verifyToken, async (req, res): Promise<void> => {
+// GET /api/tugas/:id - Dapatkan detail tugas
+router.get('/:id', verifyToken, getUserFromToken, async (req, res): Promise<void> => {
   try {
     const tugas = await getTugasById(req.params.id);
     res.json(tugas);
   } catch (err: any) {
-    res.status(404).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// PUT /api/tugas/:id - Update tugas (oleh penyuluh yang membuatnya)
+// PUT /api/tugas/:id - Update tugas
 router.put('/:id', verifyToken, getUserFromToken, async (req, res): Promise<void> => {
   try {
-    const { judul, deskripsi, konsultan_id, tanggal_mulai, deadline, lampiran_url } = req.body;
-    
-    const updateData: Partial<TugasData> = {};
-    if (judul) updateData.judul = judul;
-    if (deskripsi !== undefined) updateData.deskripsi = deskripsi;
-    if (konsultan_id) updateData.konsultan_id = konsultan_id;
-    if (tanggal_mulai !== undefined) updateData.tanggal_mulai = tanggal_mulai;
-    if (deadline) updateData.deadline = deadline;
-    if (lampiran_url !== undefined) updateData.lampiran_url = lampiran_url;
-
-    const updatedTugas = await updateTugas(req.params.id, updateData, req.userId!);
-    res.json({
-      message: 'Tugas berhasil diupdate',
-      tugas: updatedTugas
-    });
+    const tugas = await updateTugas(req.params.id, req.body, req.userId!);
+    res.json(tugas);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// PATCH /api/tugas/:id/status - Update status tugas (oleh konsultan)
-router.patch('/:id/status', verifyToken, getUserFromToken, async (req, res): Promise<void> => {
+// PUT /api/tugas/:id/status - Update status tugas
+router.put('/:id/status', verifyToken, getUserFromToken, async (req, res): Promise<void> => {
   try {
     const { status } = req.body;
-    
-    if (!status || !['Belum Dikerjakan', 'Sedang Berlangsung', 'Selesai'].includes(status)) {
-      res.status(400).json({ 
-        error: 'Status harus salah satu dari: Belum Dikerjakan, Sedang Berlangsung, Selesai' 
-      });
-      return;
-    }
-
-    const result = await updateTugasStatus(req.params.id, status, req.userId!);
-    res.json(result);
+    const tugas = await updateTugasStatus(req.params.id, status, req.userId!);
+    res.json(tugas);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// DELETE /api/tugas/:id - Hapus tugas (oleh penyuluh yang membuatnya)
+// DELETE /api/tugas/:id - Hapus tugas
 router.delete('/:id', verifyToken, getUserFromToken, async (req, res): Promise<void> => {
   try {
     const result = await deleteTugas(req.params.id, req.userId!);
     res.json(result);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// GET /api/tugas/:id/riwayat - Dapatkan riwayat perubahan tugas
-router.get('/:id/riwayat', verifyToken, async (req, res): Promise<void> => {
+// GET /api/tugas/:id/riwayat - Dapatkan riwayat tugas
+router.get('/:id/riwayat', verifyToken, getUserFromToken, async (req, res): Promise<void> => {
   try {
     const riwayat = await getTugasRiwayat(req.params.id);
     res.json(riwayat);
@@ -184,7 +150,7 @@ router.get('/:id/riwayat', verifyToken, async (req, res): Promise<void> => {
 });
 
 // GET /api/tugas/:id/komentar - Dapatkan komentar tugas
-router.get('/:id/komentar', verifyToken, async (req, res): Promise<void> => {
+router.get('/:id/komentar', verifyToken, getUserFromToken, async (req, res): Promise<void> => {
   try {
     const komentar = await getTugasKomentar(req.params.id);
     res.json(komentar);
@@ -197,21 +163,10 @@ router.get('/:id/komentar', verifyToken, async (req, res): Promise<void> => {
 router.post('/:id/komentar', verifyToken, getUserFromToken, async (req, res): Promise<void> => {
   try {
     const { komentar } = req.body;
-    
-    if (!komentar || komentar.trim() === '') {
-      res.status(400).json({ 
-        error: 'Komentar tidak boleh kosong' 
-      });
-      return;
-    }
-
-    const newKomentar = await addTugasKomentar(req.params.id, komentar.trim(), req.userId!);
-    res.status(201).json({
-      message: 'Komentar berhasil ditambahkan',
-      komentar: newKomentar
-    });
+    const result = await addTugasKomentar(req.params.id, komentar, req.userId!);
+    res.status(201).json(result);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 

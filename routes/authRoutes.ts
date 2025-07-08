@@ -1,7 +1,12 @@
-import express, { Request, Response } from 'express';
 import { registerUser, getAllUsers, getUserById, updateUser, deleteUser, loginUser } from '../services/authServices';
+import { createClient } from '@supabase/supabase-js';
+import express, { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 
 const router = express.Router();
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
+
 
 // Register user (single)
 router.post('/register', async (req, res) => {
@@ -32,6 +37,44 @@ router.post('/register-many', async (req, res) => {
   }
   res.json(results);
 });
+
+
+// Login user
+router.post('/login', async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+  // Cek user di database
+  const { data: user, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', email)
+    .single();
+
+  if (error || !user) {
+    return res.status(401).json({ error: 'Email tidak ditemukan' });
+  }
+  // Bandingkan password dengan hash
+  const passwordMatch = await bcrypt.compare(password, user.password_hash);
+  if (!passwordMatch) {
+    return res.status(401).json({ error: 'Password salah' });
+  }
+  // Buat token JWT
+  const access_token = jwt.sign(
+    { id: user.id, email: user.email, role: user.role },
+    process.env.JWT_SECRET || 'secret',
+    { expiresIn: '1d' }
+  );
+  res.json({
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      wilayah: user.wilayah
+    },
+    access_token
+  });
+});
+
 
 // Get all users
 router.get('/users', async (req, res) => {
@@ -70,17 +113,6 @@ router.delete('/users/:id', async (req, res) => {
     res.json(deleted);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
-  }
-});
-
-// Login user
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const result = await loginUser(email, password);
-    res.json(result);
-  } catch (err: any) {
-    res.status(401).json({ error: err.message });
   }
 });
 

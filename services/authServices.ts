@@ -11,8 +11,8 @@ export async function registerUser(name: string, email: string, password: string
   
   const userId = authUser.user.id;
   
-  // Jika role adalah konsultan_tani dan wilayah tidak disediakan, set default
-  const userWilayah = role === 'konsultan_tani' ? (wilayah || 'Belum Ditentukan') : null;
+  // Jika role adalah gapoktan dan wilayah tidak disediakan, set default
+  const userWilayah = role === 'gapoktan' ? (wilayah || 'Belum Ditentukan') : null;
   
   const { error: userError } = await supabase
     .from('users')
@@ -38,10 +38,15 @@ export async function getAllUsers() {
   return data;
 }
 
-export async function getUserById(id: string) {
-  const { data, error } = await supabase.from('users').select('*').eq('id', id).single();
+export async function getUserById(userId: string) {
+  const { data: user, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
   if (error) throw new Error(error.message);
-  return data;
+  return user;
 }
 
 export async function updateUser(id: string, update: any) {
@@ -61,16 +66,26 @@ export async function deleteUser(id: string) {
 }
 
 export async function loginUser(email: string, password: string) {
-  // Login ke Supabase Auth
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error || !data.user) throw new Error('Email atau password salah');
-  // Ambil data user dari tabel users
   const { data: user, error: userError } = await supabase
     .from('users')
     .select('*')
-    .eq('id', data.user.id)
+    .eq('email', email)
     .single();
-  if (userError || !user) throw new Error('User tidak ditemukan di database');
-  const { password_hash, ...userData } = user;
-  return { user: userData, access_token: data.session.access_token };
+
+  if (userError) throw new Error('Email atau password salah');
+  if (!user) throw new Error('Email atau password salah');
+
+  const isValidPassword = await bcrypt.compare(password, user.password_hash);
+  if (!isValidPassword) throw new Error('Email atau password salah');
+
+  return {
+    message: 'Login berhasil',
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      wilayah: user.wilayah
+    }
+  };
 }

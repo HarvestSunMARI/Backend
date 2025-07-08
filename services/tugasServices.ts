@@ -7,11 +7,10 @@ export interface TugasData {
   judul: string;
   deskripsi?: string;
   jenis: string;
-  konsultan_id: string;
+  gapoktan_id: string;
   tanggal_mulai?: string;
   deadline: string;
   lampiran_url?: string;
-  jenis: string;
 }
 
 export interface TugasWithDetails {
@@ -20,9 +19,9 @@ export interface TugasWithDetails {
   deskripsi?: string;
   penyuluh_id: string;
   penyuluh_nama: string;
-  konsultan_id: string;
-  konsultan_nama: string;
-  konsultan_wilayah?: string;
+  gapoktan_id: string;
+  gapoktan_nama: string;
+  gapoktan_wilayah?: string;
   tanggal_dibuat: string;
   tanggal_mulai?: string;
   deadline: string;
@@ -33,8 +32,21 @@ export interface TugasWithDetails {
   jenis: string;
 }
 
-// Dapatkan daftar konsultan untuk dropdown (berdasarkan wilayah penyuluh)
-export async function getKonsultanList(penyuluhId: string) {
+export interface GapoktanData {
+  id: string;
+  nama_gapoktan: string;
+  desa_binaan: string[];
+  ketua_gapoktan_id: string;
+  ketua: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  jumlah_anggota: number;
+}
+
+// Dapatkan daftar gapoktan untuk dropdown (berdasarkan wilayah penyuluh)
+export async function getGapoktanList(penyuluhId: string) {
   const { data: penyuluh, error: penyuluhError } = await supabase
     .from('users')
     .select('wilayah')
@@ -47,7 +59,7 @@ export async function getKonsultanList(penyuluhId: string) {
   const { data, error } = await supabase
     .from('users')
     .select('id, name, email, wilayah')
-    .eq('role', 'konsultan_tani')
+    .eq('role', 'gapoktan')
     .eq('wilayah', penyuluh.wilayah)
     .order('name');
 
@@ -81,7 +93,7 @@ export async function getTugasByPenyuluh(penyuluhId: string) {
     .select(`
       *,
       penyuluh:users!penyuluh_id(id, name, email),
-      konsultan:users!konsultan_id(id, name, email, wilayah)
+      gapoktan:users!gapoktan_id(id, name, email, wilayah)
     `)
     .eq('penyuluh_id', penyuluhId)
     .order('created_at', { ascending: false });
@@ -95,9 +107,9 @@ export async function getTugasByPenyuluh(penyuluhId: string) {
     deskripsi: tugas.deskripsi,
     penyuluh_id: tugas.penyuluh_id,
     penyuluh_nama: tugas.penyuluh.name,
-    konsultan_id: tugas.konsultan_id,
-    konsultan_nama: tugas.konsultan.name,
-    konsultan_wilayah: tugas.konsultan.wilayah,
+    gapoktan_id: tugas.gapoktan_id,
+    gapoktan_nama: tugas.gapoktan.name,
+    gapoktan_wilayah: tugas.gapoktan.wilayah,
     tanggal_dibuat: tugas.tanggal_dibuat,
     tanggal_mulai: tugas.tanggal_mulai,
     deadline: tugas.deadline,
@@ -109,16 +121,16 @@ export async function getTugasByPenyuluh(penyuluhId: string) {
   }));
 }
 
-// Dapatkan semua tugas untuk konsultan (yang ditugaskan padanya)
-export async function getTugasByKonsultan(konsultanId: string) {
+// Dapatkan semua tugas untuk gapoktan (yang ditugaskan padanya)
+export async function getTugasByGapoktan(gapoktanId: string) {
   const { data, error } = await supabase
     .from('tugas')
     .select(`
       *,
       penyuluh:users!penyuluh_id(id, name, email),
-      konsultan:users!konsultan_id(id, name, email, wilayah)
+      gapoktan:users!gapoktan_id(id, name, email, wilayah)
     `)
-    .eq('konsultan_id', konsultanId)
+    .eq('gapoktan_id', gapoktanId)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -130,9 +142,9 @@ export async function getTugasByKonsultan(konsultanId: string) {
     deskripsi: tugas.deskripsi,
     penyuluh_id: tugas.penyuluh_id,
     penyuluh_nama: tugas.penyuluh.name,
-    konsultan_id: tugas.konsultan_id,
-    konsultan_nama: tugas.konsultan.name,
-    konsultan_wilayah: tugas.konsultan.wilayah,
+    gapoktan_id: tugas.gapoktan_id,
+    gapoktan_nama: tugas.gapoktan.name,
+    gapoktan_wilayah: tugas.gapoktan.wilayah,
     tanggal_dibuat: tugas.tanggal_dibuat,
     tanggal_mulai: tugas.tanggal_mulai,
     deadline: tugas.deadline,
@@ -151,7 +163,7 @@ export async function getTugasById(tugasId: string) {
     .select(`
       *,
       penyuluh:users!penyuluh_id(id, name, email),
-      konsultan:users!konsultan_id(id, name, email, wilayah)
+      gapoktan:users!gapoktan_id(id, name, email, wilayah)
     `)
     .eq('id', tugasId)
     .single();
@@ -164,9 +176,9 @@ export async function getTugasById(tugasId: string) {
     deskripsi: data.deskripsi,
     penyuluh_id: data.penyuluh_id,
     penyuluh_nama: data.penyuluh.name,
-    konsultan_id: data.konsultan_id,
-    konsultan_nama: data.konsultan.name,
-    konsultan_wilayah: data.konsultan.wilayah,
+    gapoktan_id: data.gapoktan_id,
+    gapoktan_nama: data.gapoktan.name,
+    gapoktan_wilayah: data.gapoktan.wilayah,
     tanggal_dibuat: data.tanggal_dibuat,
     tanggal_mulai: data.tanggal_mulai,
     deadline: data.deadline,
@@ -203,29 +215,29 @@ export async function updateTugas(tugasId: string, updateData: Partial<TugasData
   return data;
 }
 
-// Update status tugas (oleh konsultan yang ditugaskan)
-export async function updateTugasStatus(tugasId: string, status: string, konsultanId: string) {
-  // Verifikasi bahwa konsultan adalah yang ditugaskan
+// Update status tugas (oleh gapoktan)
+export async function updateTugasStatus(tugasId: string, status: string, gapoktanId: string) {
+  // Verifikasi bahwa gapoktan adalah penerima tugas
   const { data: existingTugas, error: checkError } = await supabase
     .from('tugas')
-    .select('konsultan_id, status')
+    .select('gapoktan_id')
     .eq('id', tugasId)
     .single();
 
   if (checkError) throw new Error('Tugas tidak ditemukan');
-  if (existingTugas.konsultan_id !== konsultanId) {
-    throw new Error('Anda tidak memiliki izin untuk mengubah status tugas ini');
+  if (existingTugas.gapoktan_id !== gapoktanId) {
+    throw new Error('Anda tidak memiliki izin untuk mengupdate status tugas ini');
   }
 
-  // Gunakan function untuk update status dan catat riwayat
-  const { data, error } = await supabase.rpc('update_tugas_status', {
-    p_tugas_id: tugasId,
-    p_status: status,
-    p_user_id: konsultanId
-  });
+  const { data, error } = await supabase
+    .from('tugas')
+    .update({ status })
+    .eq('id', tugasId)
+    .select()
+    .single();
 
   if (error) throw new Error(error.message);
-  return { success: true, message: 'Status tugas berhasil diupdate' };
+  return data;
 }
 
 // Hapus tugas (oleh penyuluh yang membuatnya)
@@ -248,17 +260,14 @@ export async function deleteTugas(tugasId: string, penyuluhId: string) {
     .eq('id', tugasId);
 
   if (error) throw new Error(error.message);
-  return { success: true, message: 'Tugas berhasil dihapus' };
+  return { message: 'Tugas berhasil dihapus' };
 }
 
 // Dapatkan riwayat tugas
 export async function getTugasRiwayat(tugasId: string) {
   const { data, error } = await supabase
     .from('tugas_riwayat')
-    .select(`
-      *,
-      user:users(id, name, role)
-    `)
+    .select('*')
     .eq('tugas_id', tugasId)
     .order('created_at', { ascending: false });
 
@@ -272,7 +281,7 @@ export async function getTugasKomentar(tugasId: string) {
     .from('tugas_komentar')
     .select(`
       *,
-      user:users(id, name, role)
+      user:users(id, name, email)
     `)
     .eq('tugas_id', tugasId)
     .order('created_at', { ascending: true });
