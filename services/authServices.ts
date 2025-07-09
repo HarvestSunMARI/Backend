@@ -38,6 +38,15 @@ export async function getAllUsers() {
   return data;
 }
 
+export async function getAllGapoktan() {
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, name, email, wilayah, kabupaten, kecamatan, desa')
+    .eq('role', 'gapoktan');
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function getUserById(userId: string) {
   const { data: user, error } = await supabase
     .from('users')

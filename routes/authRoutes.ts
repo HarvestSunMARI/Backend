@@ -1,4 +1,5 @@
-import { registerUser, getAllUsers, getUserById, updateUser, deleteUser, loginUser } from '../services/authServices';
+import { registerUser, getAllUsers, getUserById, updateUser, deleteUser, loginUser, getAllGapoktan } from '../services/authServices';
+import { createTugas, getAllTugas, getTugasById, updateTugas, deleteTugas } from '../services/tugasServices';
 import { createClient } from '@supabase/supabase-js';
 import express, { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
@@ -113,6 +114,16 @@ router.delete('/users/:id', async (req, res) => {
     res.json(deleted);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Get all gapoktan
+router.get('/gapoktan', async (req, res) => {
+  try {
+    const gapoktan = await getAllGapoktan();
+    res.json(gapoktan);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 

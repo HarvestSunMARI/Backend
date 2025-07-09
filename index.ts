@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api', authRoutes)
-app.use('/api/tugas', tugasRoutes);
+app.use('/api', tugasRoutes);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
